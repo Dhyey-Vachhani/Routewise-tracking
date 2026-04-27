@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RouteWise – Driver</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    .tracking-live-card {
+      background: linear-gradient(135deg, #0f1b2d, #1e3a5f);
+      border-radius: 14px;
+      padding: 22px 26px;
+      color: #fff;
+      margin-top: 20px;
+      display: none;
+    }
+    .tracking-live-card.visible { display: block; }
+    .tracking-live-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-coords {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .coord-box {
+      background: rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .coord-box .c-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .coord-box .c-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .stop-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(239,68,68,0.15);
+      color: #fca5a5;
+      border: 1.5px solid rgba(239,68,68,0.3);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.18s;
+    }
+    .stop-btn:hover {
+      background: rgba(239,68,68,0.25);
+      color: #fff;
+    }
+    .send-count {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span>RouteWise</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="tracker.html" class="nav-item">Track Shipment</a>
+    <a href="driver.html" class="nav-item active">Start Driving</a>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-name">Driver</div>
+      <div class="user-role">Driver</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-content">
+  <div class="topbar">
+    <h1>Driver Panel</h1>
+    <div class="topbar-actions">
+      <span id="statusBadge" class="status-badge inactive">
+        <span class="status-dot"></span> Offline
+      </span>
+      <button class="btn-logout">Logout</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+
+    <!-- Profile Header -->
+    <div class="profile-header-card">
+      <div class="profile-header-info">
+        <div class="profile-name">Driver Console</div>
+        <div class="profile-sub">Start your trip and share live location</div>
+        <span class="badge">Driver Mode</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- Trip Form -->
+      <div class="card">
+        <div class="card-title">Trip Details</div>
+
+        <div class="form-group">
+          <label>Number Plate</label>
+          <input type="text" id="numberPlate" placeholder="e.g. MH12AB1234" maxlength="15" />
+        </div>
+
+        <div class="form-group">
+          <label>Origin Location</label>
+          <input type="text" id="origin" placeholder="e.g. Mumbai, Maharashtra" />
+        </div>
+
+        <div class="form-group">
+          <label>Destination Location</label>
+          <input type="text" id="destination" placeholder="e.g. Pune, Maharashtra" />
+        </div>
+
+        <button class="btn-primary" id="startBtn" onclick="startTracking()">
+          <span id="startBtnText">Start Tracking</span>
+          <div class="spinner" id="startSpinner"></div>
+        </button>
+
+        <!-- Live Tracking Card -->
+        <div class="tracking-live-card" id="liveCard">
+          <h3>
+            <span class="status-dot" style="background:#22c55e;width:9px;height:9px;border-radius:50%;display:inline-block;animation:pulse 1s infinite;"></span>
+            Live Tracking Active
+          </h3>
+          <div class="live-coords">
+            <div class="coord-box">
+              <div class="c-label">Latitude</div>
+              <div class="c-value" id="liveLat">—</div>
+            </div>
+            <div class="coord-box">
+              <div class="c-label">Longitude</div>
+              <div class="c-value" id="liveLng">—</div>
+            </div>
+          </div>
+          <div class="send-count" id="sendCount">Updates sent: 0</div>
+          <button class="stop-btn" onclick="stopTracking()">Stop Tracking</button>
+        </div>
+      </div>
+
+      <!-- Trip Summary -->
+      <div class="card">
+        <div class="card-title">Trip Summary</div>
+        <div class="info-row">
+          <span class="label">Number Plate</span>
+          <span class="value" id="summaryPlate">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Origin</span>
+          <span class="value" id="summaryOrigin">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Destination</span>
+          <span class="value" id="summaryDest">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Status</span>
+          <span class="value" id="summaryStatus">Not Started</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Last Update</span>
+          <span class="value" id="summaryTime">—</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Coordinates</span>
+          <span class="value" id="summaryCoords">—</span>
+        </div>
+
+        <div style="margin-top:20px;padding:14px;background:#f0f9ff;border-radius:10px;border:1px solid #bae6fd;">
+          <div style="font-size:12px;color:#0369a1;font-weight:600;margin-bottom:6px;">How it works</div>
+          <div style="font-size:12.5px;color:#0c4a6e;line-height:1.6;">
+            Fill in your trip details and click <strong>Start Tracking</strong>. Your live GPS location will be sent to the server every 5 seconds so dispatchers can track your route in real time.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
