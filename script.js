@@ -217,6 +217,9 @@ function trackTruck() {
     document.getElementById('trackBtnText').textContent = 'Track';
     document.getElementById('trackBtn').disabled = false;
 
+    console.log('Firebase key used:', key);
+    console.log('Snapshot value:', snapshot.val());
+
     const data = snapshot.val();
     if (!data) {
       showToast('Truck not found. Make sure the driver has started tracking.', 'error');
