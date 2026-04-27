@@ -7,7 +7,7 @@
 const firebaseConfig = {
   apiKey:            "AIzaSyANTwFLwHF0Ej0--OatJ0QeuBn5pv80HYA",
   authDomain:        "routewise-tracking.firebaseapp.com",
-  databaseURL:       "https://routewise-tracking-default-rtdb.firebaseio.com",
+  databaseURL:       "https://routewise-tracking-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId:         "routewise-tracking",
   storageBucket:     "routewise-tracking.firebasestorage.app",
   messagingSenderId: "817860760901",
@@ -87,7 +87,7 @@ function startTracking() {
   // Push to Firebase every 5 seconds
   sendInterval = setInterval(() => {
     if (currentCoords) {
-      const key = numberPlate.replace(/[.#$[\]]/g, '_');
+      const key = numberPlate.replace(/[.#$[\]\s]/g, '_');
       db.ref('trucks/' + key).set({
         number_plate: numberPlate,
         origin,
@@ -204,28 +204,40 @@ function trackTruck() {
   if (!plate) { showToast('Please enter a number plate.', 'error'); return; }
 
   // Detach any previous listener
-  if (liveListener) liveListener.off();
+  if (liveListener) { liveListener.off(); liveListener = null; }
 
-  const key = plate.replace(/[.#$[\]]/g, '_');
+  const key = plate.replace(/[.#$[\]\s]/g, '_');
   const ref = db.ref('trucks/' + key);
 
   document.getElementById('trackBtnText').textContent = 'Searching...';
   document.getElementById('trackBtn').disabled = true;
 
-  // Listen for real-time updates
-  ref.on('value', async (snapshot) => {
+  // Read once first to validate, then listen for live updates
+  ref.once('value').then(async (snapshot) => {
     document.getElementById('trackBtnText').textContent = 'Track';
     document.getElementById('trackBtn').disabled = false;
 
     const data = snapshot.val();
     if (!data) {
-      showToast('Truck not found. Start tracking from the driver page first.', 'error');
+      showToast('Truck not found. Make sure the driver has started tracking.', 'error');
       return;
     }
-    await renderTruckData(data);
-  });
 
-  liveListener = ref;
+    await renderTruckData(data);
+
+    // Now attach live listener for real-time updates
+    ref.on('value', async (snap) => {
+      const live = snap.val();
+      if (live) await renderTruckData(live);
+    });
+
+    liveListener = ref;
+
+  }).catch((err) => {
+    document.getElementById('trackBtnText').textContent = 'Track';
+    document.getElementById('trackBtn').disabled = false;
+    showToast('Error connecting to database: ' + err.message, 'error');
+  });
 }
 
 async function renderTruckData(data) {
