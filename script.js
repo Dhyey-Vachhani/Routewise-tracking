@@ -1,8 +1,3 @@
-/**
- * RouteWise – script.js
- * Firebase Realtime Database (no backend needed)
- */
-
 // Firebase config
 const firebaseConfig = {
   apiKey:            "AIzaSyANTwFLwHF0Ej0--OatJ0QeuBn5pv80HYA",
@@ -18,9 +13,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ═══════════════════════════════════════════════
+/*
    SHARED UTILITIES
-═══════════════════════════════════════════════ */
+ */
 
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
@@ -42,9 +37,9 @@ function formatTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-/* ═══════════════════════════════════════════════
+/* 
    DRIVER PAGE
-═══════════════════════════════════════════════ */
+ */
 
 let watchId      = null;
 let sendInterval = null;
@@ -84,7 +79,7 @@ function startTracking() {
     { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
   );
 
-  // Push to Firebase every 5 seconds
+  // Push to Firebase
   sendInterval = setInterval(() => {
     if (currentCoords) {
       const key = numberPlate.replace(/[.#$[\]\s]/g, '_');
@@ -102,7 +97,6 @@ function startTracking() {
     }
   }, 5000);
 
-  // Update UI
   document.getElementById('startBtn').style.display = 'none';
   document.getElementById('liveCard').classList.add('visible');
 
@@ -143,9 +137,9 @@ function stopTracking() {
   showToast('Tracking stopped.', 'info');
 }
 
-/* ═══════════════════════════════════════════════
+/*
    TRACKER PAGE
-═══════════════════════════════════════════════ */
+*/
 
 let map           = null;
 let truckMarker   = null;
@@ -203,7 +197,7 @@ function trackTruck() {
   const plate = document.getElementById('trackPlate')?.value.trim().toUpperCase();
   if (!plate) { showToast('Please enter a number plate.', 'error'); return; }
 
-  // Detach any previous listener
+  // removw old listener
   if (liveListener) { liveListener.off(); liveListener = null; }
 
   const key = plate.replace(/[.#$[\]\s]/g, '_');
@@ -228,7 +222,7 @@ function trackTruck() {
 
     await renderTruckData(data);
 
-    // Now attach live listener for real-time updates
+    // live listener for realtime updates
     ref.on('value', async (snap) => {
       const live = snap.val();
       if (live) await renderTruckData(live);
