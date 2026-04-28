@@ -9,14 +9,11 @@ const firebaseConfig = {
   appId:             "1:817860760901:web:836cda877137cfeaa9da2c"
 };
 
-// Initialize Firebase (using CDN compat SDK loaded in HTML)
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/*
-   SHARED UTILITIES
- */
-
+//SHared
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
@@ -37,10 +34,7 @@ function formatTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
-/* 
-   DRIVER PAGE
- */
-
+// Driver page
 let watchId      = null;
 let sendInterval = null;
 let currentCoords = null;
@@ -136,11 +130,7 @@ function stopTracking() {
   updateCount = 0;
   showToast('Tracking stopped.', 'info');
 }
-
-/*
-   TRACKER PAGE
-*/
-
+//Tracking page
 let map           = null;
 let truckMarker   = null;
 let originMarker  = null;
@@ -206,7 +196,6 @@ function trackTruck() {
   document.getElementById('trackBtnText').textContent = 'Searching...';
   document.getElementById('trackBtn').disabled = true;
 
-  // Read once first to validate, then listen for live updates
   ref.once('value').then(async (snapshot) => {
     document.getElementById('trackBtnText').textContent = 'Track';
     document.getElementById('trackBtn').disabled = false;
